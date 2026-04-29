@@ -454,6 +454,31 @@ async function findVisibleSubmitButton(page) {
     return null;
 }
 
+async function findVisibleConfirmSubmit(page) {
+    const groups = [
+        page.locator('div.btn.btn-warning'),
+        page.locator('button.btn.btn-warning'),
+        page.locator('.layui-layer-btn0')
+    ];
+
+    for (const group of groups) {
+        const count = await group.count().catch(() => 0);
+        for (let index = 0; index < count; index++) {
+            const candidate = group.nth(index);
+            if (!await candidate.isVisible().catch(() => false)) continue;
+
+            const text = normalizeText(
+                await candidate.innerText().catch(async () => candidate.textContent().catch(() => ''))
+            );
+            if (text === '提交' || text.includes('提交')) {
+                return candidate;
+            }
+        }
+    }
+
+    return null;
+}
+
 async function readVisiblePromptTexts(page) {
     return page.evaluate(() => {
         function cleanText(value) {
@@ -594,24 +619,18 @@ async function submitTask(page, courseId, task, log) {
 
     const locate = selector => locateInAnyFrame(page, selector);
     await handleCaptcha(page, locate, async () => {
-        const confirm = await locate('div.btn.btn-warning:has-text("提交"), button.btn.btn-warning:has-text("提交"), .layui-layer-btn0');
-        if (!confirm) return true;
+        const confirm = await findVisibleConfirmSubmit(page);
+        if (!confirm) return false;
         return !(await confirm.evaluate(element => element.disabled || element.classList.contains('disabled')).catch(() => false));
     }, 5, log).catch(() => {});
 
-    const confirmSelectors = [
-        'div.btn.btn-warning:has-text("提交")',
-        'button.btn.btn-warning:has-text("提交")',
-        '.layui-layer-btn0'
-    ];
-
-    for (const selector of confirmSelectors) {
-        const confirm = await locate(selector);
-        if (!confirm) continue;
-        await humanClick(page, confirm).catch(() => confirm.click({ force: true }));
-        await page.waitForTimeout(1200);
-        break;
+    const confirm = await findVisibleConfirmSubmit(page);
+    if (!confirm) {
+        log(`[homework/submit] ${task.name} final confirm button not found`);
+        return false;
     }
+    await humanClick(page, confirm).catch(() => confirm.click({ force: true }));
+    await page.waitForTimeout(1200);
 
     const afterConfirmPrompts = await readVisiblePromptTexts(page);
     if (hasIncompletePrompt(afterConfirmPrompts)) {
