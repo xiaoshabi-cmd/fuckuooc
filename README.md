@@ -181,7 +181,7 @@ data/
 
 ## 💬 反馈与讨论
 
-有任何问题欢迎在 [Issue](https://github.com/YusongXiao/fuckuooc/issues) 中讨论。
+有任何问题欢迎在 [Issue](https://github.com/btop251/fuckuooc/issues) 中讨论。
 
 ---
 
