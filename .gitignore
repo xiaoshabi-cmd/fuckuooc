@@ -1,3 +1,7 @@
 data/
 node_modules/
 .codex/
+.codebuddy/
+dist/
+out/
+*.exe

@@ -53,14 +53,17 @@ const DISCUSSION_SCAN_PAGES = Math.max(1, parseInteger(pickConfig('DISCUSSION_SC
 const DISCUSSION_MAX_ROUNDS = Math.max(1, parseInteger(pickConfig('DISCUSSION_MAX_ROUNDS'), 5));
 const HOMEWORK_MAX_TASKS = Math.max(0, parseInteger(pickConfig('HOMEWORK_MAX_TASKS'), 0));
 
-if (!USERNAME || !PASSWORD) {
-    console.error('❌ 请在 config.txt 中填写 USERNAME 和 PASSWORD');
-    process.exit(1);
-}
+// GUI 模式下跳过校验，由 UI 层处理
+if (process.env.FUCKUOOC_SKIP_VALIDATION !== '1') {
+    if (!USERNAME || !PASSWORD) {
+        console.error('❌ 请在 config.txt 中填写 USERNAME 和 PASSWORD');
+        process.exit(1);
+    }
 
-if (!API_KEY) {
-    console.error('❌ 请在 config.txt 中填写 API_KEY');
-    process.exit(1);
+    if (!API_KEY) {
+        console.error('❌ 请在 config.txt 中填写 API_KEY');
+        process.exit(1);
+    }
 }
 
 const DATA_DIR = path.join(__dirname, '..', 'data', USERNAME);

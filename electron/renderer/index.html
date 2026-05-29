@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net;">
+  <title>FuckUOOC</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- 自定义标题栏 -->
+  <header class="titlebar">
+    <div class="titlebar-drag">
+      <div class="app-logo">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+          <path d="M2 17l10 5 10-5"/>
+          <path d="M2 12l10 5 10-5"/>
+        </svg>
+        <span>FuckUOOC</span>
+      </div>
+    </div>
+    <div class="titlebar-controls">
+      <button id="btn-minimize" class="titlebar-btn" title="最小化">
+        <svg width="12" height="12" viewBox="0 0 12 12"><rect y="5" width="12" height="2" fill="currentColor"/></svg>
+      </button>
+      <button id="btn-maximize" class="titlebar-btn" title="最大化">
+        <svg width="12" height="12" viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10" stroke="currentColor" fill="none" stroke-width="1.5"/></svg>
+      </button>
+      <button id="btn-close" class="titlebar-btn titlebar-btn-close" title="关闭">
+        <svg width="12" height="12" viewBox="0 0 12 12"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.5"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="app-container">
+    <!-- 左侧导航栏 -->
+    <nav class="sidebar">
+      <div class="nav-items">
+        <button class="nav-item active" data-page="dashboard">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" rx="1"/>
+            <rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/>
+            <rect x="14" y="14" width="7" height="7" rx="1"/>
+          </svg>
+          <span>仪表盘</span>
+        </button>
+        <button class="nav-item" data-page="config">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+          </svg>
+          <span>配置</span>
+        </button>
+        <button class="nav-item" data-page="logs">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <polyline points="14,2 14,8 20,8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+            <polyline points="10,9 9,9 8,9"/>
+          </svg>
+          <span>日志</span>
+        </button>
+        <button class="nav-item" data-page="settings">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          <span>设置</span>
+        </button>
+      </div>
+      <div class="sidebar-footer">
+        <div class="version-info">v1.0.0</div>
+      </div>
+    </nav>
+
+    <!-- 主内容区域 -->
+    <main class="content">
+      <!-- 仪表盘页面 -->
+      <div id="page-dashboard" class="page active">
+        <div class="page-header">
+          <h1>仪表盘</h1>
+          <p class="page-subtitle">任务执行状态概览</p>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-total">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-total">0</span>
+              <span class="stat-label">总课程数</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-completed">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                <polyline points="22,4 12,14.01 9,11.01"/>
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-completed">0</span>
+              <span class="stat-label">已完成</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-running">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23,4 23,10 17,10"/>
+                <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-running">0</span>
+              <span class="stat-label">进行中</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-failed">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="15" y1="9" x2="9" y2="15"/>
+                <line x1="9" y1="9" x2="15" y2="15"/>
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-failed">0</span>
+              <span class="stat-label">失败</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 任务控制区 -->
+        <div class="task-control-section">
+          <div class="section-header">
+            <h2>任务控制</h2>
+          </div>
+          <div class="task-control-card">
+            <div class="task-status-display">
+              <div class="status-indicator" id="task-status-indicator">
+                <div class="status-dot"></div>
+                <span id="task-status-text">未运行</span>
+              </div>
+              <div class="task-info" id="task-info" style="display: none;">
+                <div class="task-progress">
+                  <div class="progress-bar">
+                    <div class="progress-fill" id="task-progress-fill" style="width: 0%"></div>
+                  </div>
+                  <span id="task-progress-text">0%</span>
+                </div>
+                <div class="task-detail" id="task-current-course"></div>
+              </div>
+            </div>
+            <div class="task-actions">
+              <button id="btn-start-task" class="btn btn-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="5,3 19,12 5,21"/>
+                </svg>
+                启动任务
+              </button>
+              <button id="btn-stop-task" class="btn btn-danger" style="display: none;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="6" y="6" width="12" height="12" rx="1"/>
+                </svg>
+                停止任务
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 最近活动 -->
+        <div class="recent-activity-section">
+          <div class="section-header">
+            <h2>最近活动</h2>
+          </div>
+          <div class="activity-list" id="activity-list">
+            <div class="activity-empty">暂无活动记录</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 配置页面 -->
+      <div id="page-config" class="page">
+        <div class="page-header">
+          <h1>配置</h1>
+          <p class="page-subtitle">管理账号和运行参数</p>
+        </div>
+        <div class="config-form">
+          <!-- 账号信息 -->
+          <div class="config-group">
+            <div class="config-group-header">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+              <h3>账号信息</h3>
+            </div>
+            <div class="config-fields">
+              <div class="field-group">
+                <label for="cfg-username">手机号</label>
+                <input type="text" id="cfg-username" placeholder="UOOC 登录手机号" autocomplete="off">
+              </div>
+              <div class="field-group">
+                <label for="cfg-password">密码</label>
+                <div class="password-input">
+                  <input type="password" id="cfg-password" placeholder="UOOC 登录密码" autocomplete="off">
+                  <button type="button" class="btn-toggle-password" title="显示/隐藏密码">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LLM 配置 -->
+          <div class="config-group">
+            <div class="config-group-header">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2a10 10 0 1010 10A10 10 0 0012 2zm0 18a8 8 0 118-8 8 8 0 01-8 8z"/>
+                <path d="M12 6v6l4 2"/>
+              </svg>
+              <h3>LLM 配置</h3>
+            </div>
+            <div class="config-fields">
+              <div class="field-group">
+                <label for="cfg-apikey">API Key</label>
+                <input type="password" id="cfg-apikey" placeholder="大模型 API Key" autocomplete="off">
+              </div>
+              <div class="field-row">
+                <div class="field-group">
+                  <label for="cfg-model">默认模型</label>
+                  <input type="text" id="cfg-model" placeholder="doubao-seed-2-0-mini-260215">
+                </div>
+                <div class="field-group">
+                  <label for="cfg-retry-model">重试模型</label>
+                  <input type="text" id="cfg-retry-model" placeholder="doubao-seed-2-0-lite-260215">
+                </div>
+              </div>
+              <div class="field-group">
+                <label for="cfg-baseurl">API 地址</label>
+                <input type="text" id="cfg-baseurl" placeholder="https://ark.cn-beijing.volces.com/api/v3/chat/completions">
+              </div>
+            </div>
+          </div>
+
+          <!-- 运行设置 -->
+          <div class="config-group">
+            <div class="config-group-header">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+              </svg>
+              <h3>运行设置</h3>
+            </div>
+            <div class="config-fields">
+              <div class="field-row">
+                <div class="field-group">
+                  <label for="cfg-concurrency">并发课程数</label>
+                  <input type="number" id="cfg-concurrency" min="1" max="10" value="3">
+                </div>
+                <div class="field-group">
+                  <label for="cfg-max-courses">最大课程数</label>
+                  <input type="number" id="cfg-max-courses" min="0" value="0">
+                  <span class="field-hint">0 表示不限制</span>
+                </div>
+                <div class="field-group">
+                  <label for="cfg-slow-mo">操作延迟 (ms)</label>
+                  <input type="number" id="cfg-slow-mo" min="0" value="100">
+                </div>
+              </div>
+              <div class="field-group">
+                <label class="toggle-field">
+                  <input type="checkbox" id="cfg-headless">
+                  <span class="toggle-switch"></span>
+                  <span class="toggle-label">无头模式（隐藏浏览器窗口）</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- 功能开关 -->
+          <div class="config-group">
+            <div class="config-group-header">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="1" y="5" width="22" height="14" rx="7" ry="7"/>
+                <circle cx="16" cy="12" r="3"/>
+              </svg>
+              <h3>功能开关</h3>
+            </div>
+            <div class="config-fields">
+              <div class="field-group">
+                <label class="toggle-field">
+                  <input type="checkbox" id="cfg-enable-learning" checked>
+                  <span class="toggle-switch"></span>
+                  <span class="toggle-label">自动学习（视频 + 测验）</span>
+                </label>
+              </div>
+              <div class="field-group">
+                <label class="toggle-field">
+                  <input type="checkbox" id="cfg-enable-discussion">
+                  <span class="toggle-switch"></span>
+                  <span class="toggle-label">自动评论</span>
+                </label>
+              </div>
+              <div class="field-group">
+                <label class="toggle-field">
+                  <input type="checkbox" id="cfg-enable-homework">
+                  <span class="toggle-switch"></span>
+                  <span class="toggle-label">自动作业</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- 保存按钮 -->
+          <div class="config-actions">
+            <button id="btn-save-config" class="btn btn-primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+                <polyline points="17,21 17,13 7,13 7,21"/>
+                <polyline points="7,3 7,8 15,8"/>
+              </svg>
+              保存配置
+            </button>
+            <button id="btn-reset-config" class="btn btn-secondary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="1,4 1,10 7,10"/>
+                <path d="M3.51 15a9 9 0 102.13-9.36L1 10"/>
+              </svg>
+              重置
+            </button>
+          </div>
+          <div id="config-save-toast" class="toast" style="display: none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+              <polyline points="22,4 12,14.01 9,11.01"/>
+            </svg>
+            配置已保存
+          </div>
+        </div>
+      </div>
+
+      <!-- 日志页面 -->
+      <div id="page-logs" class="page">
+        <div class="page-header">
+          <h1>日志</h1>
+          <p class="page-subtitle">实时运行日志</p>
+        </div>
+        <div class="logs-container">
+          <div class="logs-toolbar">
+            <div class="logs-filter">
+              <button class="filter-btn active" data-level="all">全部</button>
+              <button class="filter-btn" data-level="info">INFO</button>
+              <button class="filter-btn" data-level="warn">WARN</button>
+              <button class="filter-btn" data-level="error">ERROR</button>
+            </div>
+            <div class="logs-actions">
+              <button id="btn-clear-logs" class="btn btn-icon" title="清空日志">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3,6 5,6 21,6"/>
+                  <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                </svg>
+              </button>
+              <button id="btn-toggle-autoscroll" class="btn btn-icon active" title="自动滚动">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <polyline points="19,12 12,19 5,12"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="logs-output" id="logs-output">
+            <div class="log-empty">等待日志输出...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 设置页面 -->
+      <div id="page-settings" class="page">
+        <div class="page-header">
+          <h1>设置</h1>
+          <p class="page-subtitle">应用全局设置</p>
+        </div>
+        <div class="settings-section">
+          <!-- 开机自启动 -->
+          <div class="setting-card">
+            <div class="setting-info">
+              <div class="setting-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                  <path d="M13.73 21a2 2 0 01-3.46 0"/>
+                </svg>
+              </div>
+              <div class="setting-text">
+                <h3>开机自启动</h3>
+                <p>系统启动时自动运行 FuckUOOC（最小化到托盘）</p>
+              </div>
+            </div>
+            <label class="toggle-field">
+              <input type="checkbox" id="setting-autostart">
+              <span class="toggle-switch"></span>
+            </label>
+          </div>
+
+          <!-- 系统信息 -->
+          <div class="setting-card">
+            <div class="setting-info">
+              <div class="setting-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="16" x2="12" y2="12"/>
+                  <line x1="12" y1="8" x2="12.01" y2="8"/>
+                </svg>
+              </div>
+              <div class="setting-text">
+                <h3>关于</h3>
+                <p>FuckUOOC - UOOC 自动刷课工具</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="system-info-card">
+            <h3>系统信息</h3>
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">应用版本</span>
+                <span class="info-value" id="info-app-version">-</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Electron</span>
+                <span class="info-value" id="info-electron-version">-</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Node.js</span>
+                <span class="info-value" id="info-node-version">-</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">平台</span>
+                <span class="info-value" id="info-platform">-</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 底部状态栏 -->
+  <footer class="statusbar">
+    <div class="status-left">
+      <span class="status-indicator-dot" id="global-status-dot"></span>
+      <span id="global-status-text">就绪</span>
+    </div>
+    <div class="status-right">
+      <span id="status-time"></span>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

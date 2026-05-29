@@ -1,6 +1,18 @@
 {
+  "name": "fuckuooc",
+  "version": "1.0.0",
+  "description": "UOOC 自动刷课工具 - 支持可视化界面和开机自启动",
+  "main": "electron/main.js",
   "license": "MIT",
+  "scripts": {
+    "start": "node start.js",
+    "gui": "electron .",
+    "dev": "electron . --dev"
+  },
   "dependencies": {
     "playwright": "^1.56.1"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0"
   }
 }
