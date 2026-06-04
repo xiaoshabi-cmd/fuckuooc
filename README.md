@@ -67,11 +67,25 @@ API 密钥从火山引擎获取：<https://console.volcengine.com/ark/region:ark
 
 ### 4. 运行
 
+**命令行模式：**
 ```bash
 node start.js
 ```
 
-脚本启动后会自动打开浏览器完成登录、刷课、答题。你可以**最小化控制台和浏览器窗口**，去做自己的事。
+**GUI 模式（推荐）：**
+```bash
+npm run gui
+```
+
+**隐藏 CMD 窗口启动（Windows）：**
+```powershell
+# 创建桌面快捷方式（首次使用）
+powershell -ExecutionPolicy Bypass -File create-shortcut.ps1
+
+# 或直接双击 launch-hidden.vbs 启动
+```
+
+脚本启动后会自动打开浏览器完成登录、刷课、答题。你可以**最小化窗口**，去做自己的事。
 
 ---
 

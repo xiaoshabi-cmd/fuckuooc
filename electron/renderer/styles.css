@@ -746,6 +746,16 @@ html, body {
   position: relative;
 }
 
+.config-actions-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg-darkest);
+  padding: 12px 0;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
 .toast {
   position: fixed;
   bottom: 48px;
@@ -819,6 +829,38 @@ html, body {
 .filter-btn.active {
   background: var(--primary);
   color: var(--text-bright);
+}
+
+.log-course-select {
+  height: 28px;
+  padding: 0 8px;
+  background: var(--bg-medium);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+  margin-left: 4px;
+}
+
+.log-course-select:focus {
+  border-color: var(--primary);
+}
+
+.log-course-tag {
+  display: inline-block;
+  padding: 0 6px;
+  margin-right: 6px;
+  background: rgba(79, 140, 255, 0.15);
+  color: var(--primary);
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 500;
+  flex-shrink: 0;
+  min-width: 50px;
+  text-align: center;
 }
 
 .logs-actions {

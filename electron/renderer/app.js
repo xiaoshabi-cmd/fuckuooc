@@ -18,8 +18,10 @@
     autoLaunch: false,
     logs: [],
     logFilter: 'all',
+    logCourseFilter: 'all',
     autoScroll: true,
-    activities: []
+    activities: [],
+    courses: new Set() // 已出现的课程列表
   };
 
   // ============================================================
@@ -156,7 +158,11 @@
       } else if (status.error) {
         addActivity(`任务异常: ${status.error}`);
       } else if (status.stopped) {
-        addActivity('任务已停止');
+        if (status.reason === 'browser_closed') {
+          addActivity('浏览器已关闭，任务已停止（应用继续运行）');
+        } else {
+          addActivity('任务已停止');
+        }
       }
     });
   }
@@ -242,8 +248,17 @@
   // 日志管理
   // ============================================================
   function addLogEntry(entry) {
+    // 提取课程名称
+    const courseName = extractCourseName(entry.message);
+    entry.courseName = courseName;
     state.logs.push(entry);
     if (state.logs.length > 1000) state.logs.shift();
+
+    // 更新课程列表
+    if (courseName && !state.courses.has(courseName)) {
+      state.courses.add(courseName);
+      updateCourseFilter();
+    }
 
     if (shouldShowLog(entry)) {
       renderLogEntry(entry);
@@ -251,8 +266,22 @@
   }
 
   function shouldShowLog(entry) {
-    if (state.logFilter === 'all') return true;
-    return entry.level === state.logFilter;
+    if (state.logFilter !== 'all' && entry.level !== state.logFilter) return false;
+    if (state.logCourseFilter !== 'all' && entry.courseName !== state.logCourseFilter) return false;
+    return true;
+  }
+
+  function updateCourseFilter() {
+    const select = $('#log-course-filter');
+    const current = select.value;
+    select.innerHTML = '<option value="all">全部课程</option>';
+    for (const course of state.courses) {
+      const opt = document.createElement('option');
+      opt.value = course;
+      opt.textContent = course;
+      select.appendChild(opt);
+    }
+    select.value = state.courses.has(current) ? current : 'all';
   }
 
   function renderLogEntry(entry) {
@@ -267,9 +296,14 @@
       ? new Date(entry.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
       : new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
+    const courseTag = entry.courseName
+      ? `<span class="log-course-tag">${escapeHtml(entry.courseName)}</span>`
+      : '';
+
     div.innerHTML = `
       <span class="log-time">${time}</span>
       <span class="log-level log-level-${entry.level}">${entry.level.toUpperCase()}</span>
+      ${courseTag}
       <span class="log-message">${escapeHtml(entry.message)}</span>
     `;
 
@@ -300,7 +334,7 @@
       addLogEntry(entry);
     });
 
-    // 日志过滤
+    // 日志级别过滤
     $$('.filter-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         $$('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -310,9 +344,36 @@
       });
     });
 
+    // 课程筛选
+    $('#log-course-filter').addEventListener('change', (e) => {
+      state.logCourseFilter = e.target.value;
+      renderAllLogs();
+    });
+
+    // 导出日志
+    $('#btn-export-logs').addEventListener('click', async () => {
+      const logs = await electronAPI.log.export();
+      if (!logs || logs.length === 0) {
+        addActivity('没有可导出的日志');
+        return;
+      }
+      const content = logs.map(l => l.raw).join('\n');
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const now = new Date();
+      a.href = url;
+      a.download = `fuckuooc-log-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+      addActivity('日志已导出');
+    });
+
     // 清空日志
     $('#btn-clear-logs').addEventListener('click', () => {
       state.logs = [];
+      state.courses.clear();
+      updateCourseFilter();
       const output = $('#logs-output');
       output.innerHTML = '<div class="log-empty">等待日志输出...</div>';
     });
@@ -340,6 +401,34 @@
       addActivity(`开机自启动已${state.autoLaunch ? '开启' : '关闭'}`);
     });
 
+    // 加载 GUI 设置
+    const cfg = await electronAPI.config.read();
+    $('#setting-start-minimized').checked = cfg.START_MINIMIZED === 'true';
+    $('#setting-close-browser').checked = cfg.CLOSE_BROWSER_ON_FINISH === 'true';
+    $('#setting-close-app').checked = cfg.CLOSE_APP_ON_FINISH === 'true';
+    $('#setting-auto-save-log').checked = cfg.AUTO_SAVE_LOG === 'true';
+
+    // 设置变更时自动保存
+    const saveSetting = async (key, value) => {
+      const currentCfg = await electronAPI.config.read();
+      currentCfg[key] = value ? 'true' : 'false';
+      await electronAPI.config.write(currentCfg);
+      addActivity(`设置已更新: ${key} = ${value}`);
+    };
+
+    $('#setting-start-minimized').addEventListener('change', (e) => {
+      saveSetting('START_MINIMIZED', e.target.checked);
+    });
+    $('#setting-close-browser').addEventListener('change', (e) => {
+      saveSetting('CLOSE_BROWSER_ON_FINISH', e.target.checked);
+    });
+    $('#setting-close-app').addEventListener('change', (e) => {
+      saveSetting('CLOSE_APP_ON_FINISH', e.target.checked);
+    });
+    $('#setting-auto-save-log').addEventListener('change', (e) => {
+      saveSetting('AUTO_SAVE_LOG', e.target.checked);
+    });
+
     // 系统信息
     const info = await electronAPI.system.info();
     $('#info-app-version').textContent = info.appVersion || '1.0.0';
@@ -355,6 +444,19 @@
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+  }
+
+  /**
+   * 从日志消息中提取课程名称
+   * 匹配模式: [课程X/Y:课程名称] 或 [课程X/Y:COURSE_ID]
+   * 支持中文课程名如 "大学生心理健康" 和纯数字ID如 "123456"
+   */
+  function extractCourseName(message) {
+    const match = message.match(/\[课程[\d/]+[:\s]*(.+?)\]/);
+    if (!match) return '';
+    const name = match[1].trim();
+    // 如果提取到的全是数字，保留为课程ID（向后兼容）
+    return name;
   }
 
   function updateClock() {

@@ -299,6 +299,55 @@ async function learnCourse(page, courseId, log, options = {}) {
             continue;
         }
 
+        // 检测非交互内容（附件、文本、文档等），自动跳过
+        const isNonInteractive = await page.evaluate(() => {
+            const active = document.querySelector('.oneline.active') || document.querySelector('.basic.active');
+            if (!active) return null;
+            const text = (active.innerText || '').trim().toLowerCase();
+
+            // 检查附件类型
+            const hasAttachment = document.querySelector('.attachment-list, .file-list, .download-list, [class*="attachment"], [class*="download"]') !== null;
+            // 检查文档/PDF/文本阅读器
+            const hasDocViewer = document.querySelector('.doc-viewer, .pdf-viewer, .text-viewer, [class*="viewer"], iframe[src*="pdf"], iframe[src*="doc"]') !== null;
+            // 检查纯文本/富文本内容（没有视频和测验，但有大量文本）
+            const hasTextContent = document.querySelector('.course-content, .rich-text, .article-content, .content-body, [class*="content-area"]') !== null;
+            const noVideo = !document.querySelector('video');
+            const noQuizBtn = !document.querySelector('[class*="quiz"], [class*="test"], [class*="exam"]');
+
+            // 检查资源链接（PPT、Word、PDF等文件链接）
+            const hasResourceLinks = document.querySelector('a[href$=".pdf"], a[href$=".doc"], a[href$=".docx"], a[href$=".ppt"], a[href$=".pptx"], a[href$=".xls"], a[href$=".xlsx"]') !== null;
+
+            // 判断为附件或资源类型
+            if (hasAttachment || hasResourceLinks) return 'attachment';
+            // 判断为文档查看器
+            if (hasDocViewer && noVideo) return 'document';
+            // 判断为纯文本内容（无视频无测验的文本页面）
+            if (hasTextContent && noVideo && noQuizBtn) {
+                // 进一步确认：检查标题是否包含附件/资料/文档等关键词
+                const sectionTitle = text;
+                if (sectionTitle.includes('附件') || sectionTitle.includes('资料') ||
+                    sectionTitle.includes('文档') || sectionTitle.includes('阅读') ||
+                    sectionTitle.includes('材料') || sectionTitle.includes('参考') ||
+                    sectionTitle.includes('附件') || sectionTitle.includes('resource')) {
+                    return 'text_resource';
+                }
+            }
+
+            return null;
+        });
+
+        if (isNonInteractive) {
+            const typeNames = { attachment: '附件', document: '文档', text_resource: '文本资料' };
+            log(`⏭️ 检测到${typeNames[isNonInteractive] || '非交互内容'}，自动跳过...`);
+            quizRetries = 0;
+            if (!await goToNextPending(page, log)) {
+                log('🏁 已完成所有章节');
+                break;
+            }
+            continue;
+        }
+
+        // 兜底：进入下一节（带防重复机制）
         quizRetries = 0;
         log('⏭️ 进入下一节...');
         if (!await goToNextPending(page, log)) {

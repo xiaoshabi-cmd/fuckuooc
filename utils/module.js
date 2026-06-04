@@ -7,7 +7,7 @@ const QUIZ_PROMPT = '请仔细阅读图片中的题干和所有选项，分析�
 async function getAnswersFromImage(imagePath, questionType = '选择题', log, options = {}) {
     const _log = log || console.log;
     const modelName = options.model || MODEL_NAME;
-    const thinkingLevel = options.reasoningEffort || 'medium';
+    const thinkingLevel = options.reasoningEffort || 'high';
     const absPath = path.resolve(imagePath);
     let imageBase64;
     try {
@@ -22,7 +22,9 @@ async function getAnswersFromImage(imagePath, questionType = '选择题', log, o
         model: modelName,
         temperature: 0,
         top_p: 1,
+        thinking: { type: 'enabled' },
         reasoning_effort: thinkingLevel,
+        stream: false,
         messages: [{
             role: 'user',
             content: [
@@ -85,7 +87,7 @@ async function getAnswersFromImage(imagePath, questionType = '选择题', log, o
 async function getSubjectiveAnswers(questionText, answerCount = 1, log, options = {}) {
     const _log = log || console.log;
     const modelName = options.model || MODEL_NAME;
-    const thinkingLevel = options.reasoningEffort || 'medium';
+    const thinkingLevel = options.reasoningEffort || 'high';
     const maxRetries = 3;
     const prompt = [
         '你是课程作业答题助手。',
@@ -102,7 +104,9 @@ async function getSubjectiveAnswers(questionText, answerCount = 1, log, options 
         model: modelName,
         temperature: 0.2,
         top_p: 1,
+        thinking: { type: 'enabled' },
         reasoning_effort: thinkingLevel,
+        stream: false,
         messages: [{
             role: 'user',
             content: prompt
@@ -160,7 +164,7 @@ async function getSubjectiveAnswers(questionText, answerCount = 1, log, options 
 async function getTextAnswersFromImage(imagePath, questionType = '填空题', answerCount = 1, log, options = {}) {
     const _log = log || console.log;
     const modelName = options.model || MODEL_NAME;
-    const thinkingLevel = options.reasoningEffort || 'medium';
+    const thinkingLevel = options.reasoningEffort || 'high';
     const absPath = path.resolve(imagePath);
     let imageBase64;
     try {
@@ -184,7 +188,9 @@ async function getTextAnswersFromImage(imagePath, questionType = '填空题', an
         model: modelName,
         temperature: 0,
         top_p: 1,
+        thinking: { type: 'enabled' },
         reasoning_effort: thinkingLevel,
+        stream: false,
         messages: [{
             role: 'user',
             content: [

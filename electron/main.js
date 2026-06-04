@@ -10,9 +10,13 @@ let mainWindow = null;
 let tray = null;
 let taskRunner = null;
 const logEmitter = new EventEmitter();
+const sessionLogs = []; // 本次运行的日志缓存
 const APP_NAME = 'FuckUOOC';
 const startHidden = process.argv.includes('--hidden');
 const gotSingleLock = app.requestSingleInstanceLock();
+
+// 日志文件目录
+const LOGS_DIR = path.join(app.getPath('userData'), 'logs');
 
 if (!gotSingleLock) {
   app.quit();
@@ -75,7 +79,50 @@ function writeConfig(cfg) {
   lines.push('');
   lines.push('# 作业设置');
   lines.push(`HOMEWORK_MAX_TASKS=${cfg.HOMEWORK_MAX_TASKS || '0'}`);
+  lines.push('');
+  lines.push('# GUI 设置');
+  lines.push(`CLOSE_BROWSER_ON_FINISH=${cfg.CLOSE_BROWSER_ON_FINISH || 'false'}`);
+  lines.push(`CLOSE_APP_ON_FINISH=${cfg.CLOSE_APP_ON_FINISH || 'false'}`);
+  lines.push(`AUTO_SAVE_LOG=${cfg.AUTO_SAVE_LOG || 'false'}`);
+  lines.push(`START_MINIMIZED=${cfg.START_MINIMIZED || 'false'}`);
   fs.writeFileSync(CONFIG_PATH, lines.join('\n'), 'utf-8');
+}
+
+// ============================================================
+// 日志管理
+// ============================================================
+function ensureLogsDir() {
+  if (!fs.existsSync(LOGS_DIR)) {
+    fs.mkdirSync(LOGS_DIR, { recursive: true });
+  }
+}
+
+function saveLogsToFile() {
+  if (sessionLogs.length === 0) return null;
+  ensureLogsDir();
+  const now = new Date();
+  const filename = `log-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}.txt`;
+  const filepath = path.join(LOGS_DIR, filename);
+  const lines = sessionLogs.map(entry => {
+    const time = entry.timestamp
+      ? new Date(entry.timestamp).toLocaleString('zh-CN')
+      : new Date().toLocaleString('zh-CN');
+    const course = entry.courseName ? `[${entry.courseName}] ` : '';
+    return `[${time}] [${entry.level.toUpperCase()}] ${course}${entry.message}`;
+  });
+  fs.writeFileSync(filepath, lines.join('\n'), 'utf-8');
+  logEmitter.emit('log', { level: 'info', message: `日志已保存: ${filepath}`, timestamp: Date.now() });
+  return filepath;
+}
+
+function exportLogs() {
+  return sessionLogs.map(entry => {
+    const time = entry.timestamp
+      ? new Date(entry.timestamp).toLocaleString('zh-CN')
+      : new Date().toLocaleString('zh-CN');
+    const course = entry.courseName ? `[${entry.courseName}] ` : '';
+    return { time, level: entry.level, courseName: entry.courseName || '', message: entry.message, raw: `[${time}] [${entry.level.toUpperCase()}] ${course}${entry.message}` };
+  });
 }
 
 // ============================================================
@@ -144,6 +191,8 @@ class TaskRunner extends EventEmitter {
     };
     this.emit('status', { running: true, stats: this.stats });
 
+    let browserWasClosed = false;
+
     try {
       // 重定向 console.log 到日志发射器
       const originalLog = console.log;
@@ -164,20 +213,46 @@ class TaskRunner extends EventEmitter {
       // 设置环境变量跳过 config.js 的 process.exit 校验
       process.env.FUCKUOOC_SKIP_VALIDATION = '1';
       const { run } = require('../utils/login');
-      await run(options);
+
+      // 传递 onStats 回调以同步统计数据
+      const result = await run({
+        ...options,
+        onStats: (update) => {
+          this.updateStats(update);
+        }
+      });
+
+      browserWasClosed = result?.browserDisconnected === true;
 
       // 恢复原始 console
       console.log = originalLog;
       console.error = originalError;
 
-      this.stats.completedCourses = this.stats.totalCourses;
-      this.emit('status', { running: false, stats: this.stats, completed: true });
+      if (browserWasClosed) {
+        this.emit('status', { running: false, stats: this.stats, stopped: true, reason: 'browser_closed' });
+      } else {
+        this.stats.completedCourses = this.stats.totalCourses;
+        this.emit('status', { running: false, stats: this.stats, completed: true });
+      }
     } catch (err) {
       logEmitter.emit('log', { level: 'error', message: `任务执行失败: ${err.message}` });
       this.emit('status', { running: false, stats: this.stats, error: err.message });
     } finally {
       this.running = false;
       this.abortController = null;
+
+      // 任务结束后按设置执行清理
+      const cfg = readConfig();
+      if (cfg.AUTO_SAVE_LOG === 'true') {
+        saveLogsToFile();
+      }
+      if (cfg.CLOSE_BROWSER_ON_FINISH === 'true') {
+        logEmitter.emit('log', { level: 'info', message: '任务结束，浏览器已由业务逻辑关闭', timestamp: Date.now() });
+      }
+      if (cfg.CLOSE_APP_ON_FINISH === 'true') {
+        logEmitter.emit('log', { level: 'info', message: '任务结束，即将关闭应用...', timestamp: Date.now() });
+        setTimeout(() => app.quit(), 1500);
+      }
     }
   }
 
@@ -223,7 +298,9 @@ function createMainWindow() {
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 
   mainWindow.once('ready-to-show', () => {
-    if (!startHidden) {
+    const cfg = readConfig();
+    const startMinimized = cfg.START_MINIMIZED === 'true';
+    if (!startHidden && !startMinimized) {
       mainWindow.show();
     }
   });
@@ -244,10 +321,19 @@ function createTray() {
   const iconPath = path.join(__dirname, 'renderer', 'icon.png');
   let trayIcon;
   try {
-    trayIcon = nativeImage.createFromPath(iconPath);
-    if (trayIcon.isEmpty()) throw new Error('icon empty');
-  } catch {
-    // 如果没有图标文件，创建一个简单的 16x16 图标
+    if (fs.existsSync(iconPath)) {
+      const originalIcon = nativeImage.createFromPath(iconPath);
+      if (!originalIcon.isEmpty()) {
+        // 托盘图标标准尺寸：16x16
+        trayIcon = originalIcon.resize({ width: 16, height: 16 });
+      } else {
+        throw new Error('icon empty');
+      }
+    } else {
+      throw new Error('icon file not found');
+    }
+  } catch (err) {
+    console.warn('托盘图标加载失败:', err.message);
     trayIcon = nativeImage.createEmpty();
   }
 
@@ -324,6 +410,9 @@ function setupIPC() {
   // 日志监听
   ipcMain.on('log:subscribe', (event) => {
     const handler = (log) => {
+      // 缓存日志
+      sessionLogs.push(log);
+      if (sessionLogs.length > 5000) sessionLogs.shift();
       if (!event.sender.isDestroyed()) {
         event.sender.send('log:entry', log);
       }
@@ -333,6 +422,10 @@ function setupIPC() {
       logEmitter.off('log', handler);
     });
   });
+
+  // 日志导出
+  ipcMain.handle('log:export', () => exportLogs());
+  ipcMain.handle('log:save', () => saveLogsToFile());
 
   // 系统信息
   ipcMain.handle('system:info', () => ({

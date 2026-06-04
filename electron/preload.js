@@ -42,7 +42,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
       const handler = (event, entry) => callback(entry);
       ipcRenderer.on('log:entry', handler);
       return () => ipcRenderer.removeListener('log:entry', handler);
-    }
+    },
+    export: () => ipcRenderer.invoke('log:export'),
+    save: () => ipcRenderer.invoke('log:save')
   },
 
   // 系统信息
