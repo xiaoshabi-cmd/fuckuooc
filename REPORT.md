@@ -94,14 +94,6 @@ graph TD
 
 **位置**：`config.txt` 第 2-3 行（凭据）、第 5 行（API Key）
 
-**现状**：
-```ini
-# config.txt（实际内容）
-USERNAME=13422764720
-PASSWORD=L20060523
-API_KEY=sk-ecdfc0ebdc5b410f85eaf2dd274ace6e
-```
-
 **影响**：
 - 任何拥有文件系统读取权限的人（包括恶意软件、物理接触者）可直接获取 UOOC 账号密码和 DeepSeek API Key
 - API Key 可被用于滥用调用额度、发起恶意请求
