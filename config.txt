@@ -1,9 +1,9 @@
 # UOOC 账号
-USERNAME=13422764720
-PASSWORD=L20060523
+USERNAME=
+PASSWORD=
 
 # LLM 配置
-API_KEY=sk-ecdfc0ebdc5b410f85eaf2dd274ace6e
+API_KEY=
 
 # 默认模型（答题用）
 MODEL=deepseek-v4-pro
